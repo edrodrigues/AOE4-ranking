@@ -10,6 +10,19 @@ const GameData = {
     scores: JSON.parse(localStorage.getItem('scores')) || { 'Ed': 0, 'Ian': 0, 'Zeca': 0, 'Jorge': 0 },
     gameHistory: JSON.parse(localStorage.getItem('gameHistory')) || [],
 
+    // Utility function to format date in DD/MM/YY format
+    formatDate(date) {
+        if (!(date instanceof Date)) {
+            date = new Date(date);
+        }
+        
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(-2);
+        
+        return `${day}/${month}/${year}`;
+    },
+
     // Load data from localStorage
     init() {
         const savedScores = localStorage.getItem('scores');
@@ -57,50 +70,21 @@ const GameData = {
         this.updatePlayerPoints();
     },
 
-    // Update both charts
+    // Update charts
     updateCharts() {
-        // Bar Chart - Current Rankings
-        const barChartOptions = {
-            series: [{
-                name: 'Pontos',
-                data: this.players.map(player => this.scores[player])
-            }],
-            chart: {
-                type: 'bar',
-                height: 250,
-                toolbar: { show: false }
-            },
-            colors: this.players.map(player => this.playerColors[player]),
-            plotOptions: {
-                bar: {
-                    borderRadius: 8,
-                    columnWidth: '60%',
-                }
-            },
-            dataLabels: { enabled: false },
-            xaxis: {
-                categories: this.players,
-                labels: {
-                    style: { colors: '#4B5563' }
-                }
-            },
-            yaxis: {
-                title: { text: 'Pontos' },
-                labels: {
-                    style: { colors: '#4B5563' }
-                }
-            },
-            grid: {
-                borderColor: '#E5E7EB',
-                strokeDashArray: 4
-            }
-        };
-
         // Line Chart - Points Evolution
-        const lineChartData = this.players.map(player => ({
-            name: player,
-            data: this.getPlayerPointsHistory(player)
-        }));
+        const startDate = this.gameHistory.length > 0 ? new Date(this.gameHistory[0].date).getTime() - 86400000 : new Date().getTime(); // One day before first game or current date
+        
+        const lineChartData = this.players.map(player => {
+            const history = this.getPlayerPointsHistory(player);
+            return {
+                name: player,
+                data: [
+                    { x: startDate, y: 0 },  // Explicitly start at 0
+                    ...history
+                ]
+            };
+        });
 
         const lineChartOptions = {
             series: lineChartData,
@@ -119,16 +103,27 @@ const GameData = {
                 strokeWidth: 0
             },
             xaxis: {
-                type: 'numeric',
+                type: 'datetime',
                 labels: {
-                    style: { colors: '#4B5563' }
+                    style: { colors: '#4B5563' },
+                    datetimeFormatter: {
+                        year: 'yyyy',
+                        month: 'MM/yy',
+                        day: 'dd/MM/yy',
+                        hour: 'HH:mm'
+                    },
+                    formatter: (timestamp) => {
+                        return this.formatDate(new Date(timestamp));
+                    }
                 }
             },
             yaxis: {
                 title: { text: 'Pontos' },
                 labels: {
                     style: { colors: '#4B5563' }
-                }
+                },
+                min: 0,  // Explicitly set minimum to 0
+                forceNiceScale: true  // Ensure y-axis is nicely scaled from 0
             },
             grid: {
                 borderColor: '#E5E7EB',
@@ -140,14 +135,7 @@ const GameData = {
             }
         };
 
-        // Initialize or update charts
-        if (!this.barChart) {
-            this.barChart = new ApexCharts(document.querySelector('#bar-chart'), barChartOptions);
-            this.barChart.render();
-        } else {
-            this.barChart.updateOptions(barChartOptions);
-        }
-
+        // Initialize or update line chart
         if (!this.lineChart) {
             this.lineChart = new ApexCharts(document.querySelector('#line-chart'), lineChartOptions);
             this.lineChart.render();
@@ -158,8 +146,13 @@ const GameData = {
 
     // Get points history for a player
     getPlayerPointsHistory(player) {
+        // Sort game history by date to ensure chronological calculation
+        const sortedGameHistory = [...this.gameHistory].sort((a, b) => new Date(a.date) - new Date(b.date));
+        
         let points = 0;
-        return this.gameHistory.map((game, index) => {
+        const pointsHistory = [];
+
+        sortedGameHistory.forEach(game => {
             if (game.mode === '2v2') {
                 if (game.winners.includes(player)) points += 3;
                 else if (game.losers.includes(player)) points = Math.max(0, points - 1);
@@ -168,8 +161,18 @@ const GameData = {
                 else if (game.second === player) points += 2;
                 else if (game.third === player) points += 1;
             }
-            return { x: index + 1, y: points };
+
+            // Only add points if the player was involved in the game
+            if (game.mode === '2v2' && (game.winners.includes(player) || game.losers.includes(player)) ||
+                game.mode === 'ffa' && (game.first === player || game.second === player || game.third === player || game.fourth === player)) {
+                pointsHistory.push({ 
+                    x: new Date(game.date).getTime(), 
+                    y: points 
+                });
+            }
         });
+
+        return pointsHistory;
     },
 
     // Update game history list
@@ -182,12 +185,14 @@ const GameData = {
             const historyItem = document.createElement('div');
             historyItem.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-lg';
             
+            const formattedDate = this.formatDate(new Date(game.date));
+            
             let gameDetails = '';
             if (game.mode === '2v2') {
                 gameDetails = `
                     <div class="flex-grow">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm text-gray-500">${game.date || 'Data não informada'}</span>
+                            <span class="text-sm text-gray-500">${formattedDate}</span>
                         </div>
                         <p class="text-gray-600">
                             <span class="font-medium text-green-600">${game.winners.join(' + ')}</span>
@@ -200,7 +205,7 @@ const GameData = {
                 gameDetails = `
                     <div class="flex-grow">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm text-gray-500">${game.date || 'Data não informada'}</span>
+                            <span class="text-sm text-gray-500">${formattedDate}</span>
                         </div>
                         <p class="text-gray-600">
                             <span class="font-medium text-yellow-600">1º</span> ${game.first} •
@@ -293,17 +298,7 @@ const GameData = {
 
     // Add new game
     addGame(mode, data) {
-        // Get the date input
-        const dateInput = document.getElementById('gameDate');
-        const date = dateInput ? dateInput.value : '';
-
-        // Validate date format (DD/MM/YY)
-        if (date && !/^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{2}$/.test(date)) {
-            alert('Por favor, insira a data no formato DD/MM/YY');
-            return;
-        }
-
-        const game = { mode, date, ...data };
+        const game = { mode, ...data };
         
         if (mode === '2v2') {
             const { team1, team2 } = data;
@@ -332,12 +327,110 @@ const GameData = {
             document.getElementById('form2v2').classList.add('hidden');
             document.getElementById('formFFA').classList.add('hidden');
         }
+    },
+
+    // Edit game method
+    editGame(index) {
+        const game = this.gameHistory[index];
+        if (!game) return;
+
+        const formattedDate = this.formatDate(new Date(game.date));
+
+        if (game.mode === '2v2') {
+            document.getElementById('gameDate').value = formattedDate;
+            document.querySelector('[name="winner1"]').value = game.winners[0] || '';
+            document.querySelector('[name="winner2"]').value = game.winners[1] || '';
+            document.querySelector('[name="loser1"]').value = game.losers[0] || '';
+            document.querySelector('[name="loser2"]').value = game.losers[1] || '';
+
+            // Update button styles
+            document.getElementById('btn2v2').classList.add('border-blue-500', 'text-blue-600');
+            document.getElementById('btnFFA').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('form2v2').classList.remove('hidden');
+            document.getElementById('formFFA').classList.add('hidden');
+        } else {
+            document.getElementById('gameDate').value = formattedDate;
+            document.querySelector('[name="first"]').value = game.first || '';
+            document.querySelector('[name="second"]').value = game.second || '';
+            document.querySelector('[name="third"]').value = game.third || '';
+            document.querySelector('[name="fourth"]').value = game.fourth || '';
+
+            // Update button styles
+            document.getElementById('btnFFA').classList.add('border-blue-500', 'text-blue-600');
+            document.getElementById('btn2v2').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('formFFA').classList.remove('hidden');
+            document.getElementById('form2v2').classList.add('hidden');
+        }
+
+        // Remove the old game
+        this.gameHistory.splice(index, 1);
+        this.recalculateScores();
+        this.save();
+
+        // Scroll to form
+        document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
+    },
+
+    deleteGame(index) {
+        if (confirm('Tem certeza que deseja excluir este jogo?')) {
+            this.gameHistory.splice(index, 1);
+            this.recalculateScores();
+            this.save();
+        }
+    },
+
+    recalculateScores() {
+        // Reset all scores
+        this.players.forEach(player => {
+            this.scores[player] = 0;
+        });
+
+        // Recalculate based on history
+        this.gameHistory.forEach(game => {
+            if (game.mode === '2v2') {
+                this.update2v2Scores(game.winners, game.losers);
+            } else {
+                this.updateFfaScores(game.first, game.second, game.third);
+            }
+        });
     }
 };
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     GameData.init();
+
+    // Populate all player select dropdowns
+    function populatePlayerSelects() {
+        const selects = document.querySelectorAll('select');
+        selects.forEach(select => {
+            // Keep the first option (placeholder)
+            const firstOption = select.firstElementChild;
+            select.innerHTML = '';
+            select.appendChild(firstOption);
+            
+            // Add player options
+            GameData.players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player;
+                option.textContent = player;
+                select.appendChild(option);
+            });
+        });
+    }
+
+    // Date input formatting
+    const dateInput = document.getElementById('gameDate');
+    dateInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 4) {
+            value = value.slice(0, 2) + '/' + value.slice(2);
+        }
+        if (value.length >= 7) {
+            value = value.slice(0, 5) + '/' + value.slice(5, 7);
+        }
+        e.target.value = value;
+    });
 
     // Game mode selection
     const btn2v2 = document.getElementById('btn2v2');
@@ -359,11 +452,30 @@ document.addEventListener('DOMContentLoaded', () => {
         form2v2.classList.add('hidden');
     });
 
+    // Populate player selects initially
+    populatePlayerSelects();
+
     // Form submission
     const form = document.querySelector('form');
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         
+        // Validate date
+        const dateValue = dateInput.value;
+        if (!/^\d{2}\/\d{2}\/\d{2}$/.test(dateValue)) {
+            alert('Por favor, insira uma data válida no formato DD/MM/YY');
+            return;
+        }
+
+        // Convert date to ISO format
+        const [day, month, year] = dateValue.split('/');
+        const date = new Date(2000 + parseInt(year), parseInt(month) - 1, parseInt(day));
+        
+        if (isNaN(date.getTime())) {
+            alert('Data inválida');
+            return;
+        }
+
         if (!form2v2.classList.contains('hidden')) {
             // 2v2 mode
             const winner1 = form.querySelector('[name="winner1"]').value;
@@ -386,7 +498,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            GameData.addGame('2v2', { team1: winners, team2: losers });
+            GameData.addGame('2v2', { 
+                team1: winners, 
+                team2: losers,
+                date: date.toISOString()
+            });
         } else {
             // FFA mode
             const first = form.querySelector('[name="first"]').value;
@@ -406,90 +522,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            GameData.addGame('ffa', { first, second, third, fourth });
+            GameData.addGame('ffa', { 
+                first, 
+                second, 
+                third, 
+                fourth,
+                date: date.toISOString()
+            });
         }
 
         GameData.clearForm();
     });
 });
-
-// Game editing functions
-GameData.editGame = function(index) {
-    const game = this.gameHistory[index];
-    if (!game) return;
-
-    // Reset form
-    this.clearForm();
-
-    // Set date
-    const dateInput = document.getElementById('gameDate');
-    if (dateInput) {
-        dateInput.value = game.date || '';
-    }
-
-    // Set game mode and show corresponding form
-    const mode = game.mode.toLowerCase();
-    if (mode === '2v2') {
-        document.getElementById('form2v2').classList.remove('hidden');
-        document.getElementById('formFFA').classList.add('hidden');
-        
-        // Set winners
-        document.querySelector('[name="winner1"]').value = game.winners[0] || '';
-        document.querySelector('[name="winner2"]').value = game.winners[1] || '';
-        
-        // Set losers
-        document.querySelector('[name="loser1"]').value = game.losers[0] || '';
-        document.querySelector('[name="loser2"]').value = game.losers[1] || '';
-
-        // Update button styles
-        document.getElementById('btn2v2').classList.add('border-blue-500', 'bg-blue-50');
-        document.getElementById('btnFFA').classList.remove('border-blue-500', 'bg-blue-50');
-    } else {
-        document.getElementById('formFFA').classList.remove('hidden');
-        document.getElementById('form2v2').classList.add('hidden');
-        
-        // Set positions
-        document.querySelector('[name="first"]').value = game.first || '';
-        document.querySelector('[name="second"]').value = game.second || '';
-        document.querySelector('[name="third"]').value = game.third || '';
-        document.querySelector('[name="fourth"]').value = game.fourth || '';
-
-        // Update button styles
-        document.getElementById('btnFFA').classList.add('border-blue-500', 'bg-blue-50');
-        document.getElementById('btn2v2').classList.remove('border-blue-500', 'bg-blue-50');
-    }
-
-    // Remove the old game
-    this.gameHistory.splice(index, 1);
-    
-    // Recalculate scores
-    this.recalculateScores();
-    this.save();
-
-    // Scroll to form
-    document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
-};
-
-GameData.deleteGame = function(index) {
-    if (confirm('Tem certeza que deseja excluir este jogo?')) {
-        this.gameHistory.splice(index, 1);
-        this.recalculateScores();
-        this.save();
-    }
-};
-
-GameData.recalculateScores = function() {
-    // Reset all scores
-    this.players.forEach(player => {
-        this.scores[player] = 0;
-    });
-
-    // Recalculate based on history
-    this.gameHistory.forEach(game => {
-        if (game.mode === '2v2') {
-            this.update2v2Scores(game.winners, game.losers);
-        } else {
-            this.updateFfaScores(game.first, game.second, game.third);
-        }
-    });
-};
