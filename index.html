@@ -29,161 +29,158 @@
   <body class="min-h-screen">
     <!-- Header -->
     <header class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-3xl">military_tech</span>
-                    Age of Empires IV - Ranking
-                </h1>
-            </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <span class="material-symbols-outlined text-3xl">military_tech</span>
+              Age of Empires IV - Ranking
+            </h1>
+          </div>
         </div>
+      </div>
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Column -->
-            <div class="space-y-8">
-                <!-- Current Rankings -->
-                <section class="bg-white rounded-xl shadow-lg p-6 chart-container">
-                    <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                        <span class="material-symbols-outlined">leaderboard</span>
-                        Ranking Atual
-                    </h2>
-                    <div id="bar-chart"></div>
-                </section>
-
-                <!-- Points Evolution -->
-                <section class="bg-white rounded-xl shadow-lg p-6 chart-container">
-                    <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                        <span class="material-symbols-outlined">trending_up</span>
-                        Evolução de Pontos
-                    </h2>
-                    <div id="line-chart"></div>
-                </section>
-
-                <!-- Game History -->
-                <section class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                        <span class="material-symbols-outlined">history</span>
-                        Histórico de Jogos
-                    </h2>
-                    <div id="game-history-list" class="space-y-4">
-                        <!-- Games will be inserted here by JavaScript -->
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="space-y-8">
+            <!-- Rules Section -->
+            <section class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined">info</span>
+                    Regras
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-medium text-gray-900">2v2</h3>
+                        <ul class="list-disc pl-5 text-gray-600">
+                            <li>Time vencedor: +3 pontos por jogador</li>
+                            <li>Time perdedor: -1 ponto por jogador</li>
+                        </ul>
                     </div>
-                </section>
-            </div>
+                    <div>
+                        <h3 class="font-medium text-gray-900">FFA (Free-For-All)</h3>
+                        <ul class="list-disc pl-5 text-gray-600">
+                            <li>1º lugar: +3 pontos</li>
+                            <li>2º lugar: +2 pontos</li>
+                            <li>3º lugar: +1 ponto</li>
+                            <li>4º lugar: 0 pontos</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
 
-            <!-- Right Column -->
-            <div class="space-y-8">
-                <!-- Add New Game -->
-                <section class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                        <span class="material-symbols-outlined">add_circle</span>
-                        Adicionar Novo Jogo
-                    </h2>
-                    <form class="space-y-6">
-                        <!-- Game Mode Selection -->
-                        <div class="space-y-4">
-                            <label class="block text-sm font-medium text-gray-700">Modo de Jogo</label>
-                            <div class="grid grid-cols-2 gap-4">
-                                <button type="button" id="btn2v2" class="flex-1 py-3 px-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 focus:outline-none focus:border-blue-500 transition-colors text-center font-medium">
-                                    2v2
-                                </button>
-                                <button type="button" id="btnFFA" class="flex-1 py-3 px-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 focus:outline-none focus:border-blue-500 transition-colors text-center font-medium">
-                                    FFA
-                                </button>
-                            </div>
-                        </div>
+            <!-- Current Rankings -->
+            <section class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined">leaderboard</span>
+                    Ranking Atual
+                </h2>
+                <div id="current-rankings" class="grid gap-4"></div>
+            </section>
 
-                        <!-- 2v2 Form -->
-                        <div id="form2v2" class="hidden space-y-6">
-                            <div class="space-y-4">
-                                <label class="block text-sm font-medium text-gray-700">Time Vencedor</label>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <select name="winner1" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                        <option value="">Jogador 1</option>
-                                        <option value="Ed">Ed</option>
-                                        <option value="Ian">Ian</option>
-                                        <option value="Zeca">Zeca</option>
-                                        <option value="Jorge">Jorge</option>
-                                    </select>
-                                    <select name="winner2" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                        <option value="">Jogador 2</option>
-                                        <option value="Ed">Ed</option>
-                                        <option value="Ian">Ian</option>
-                                        <option value="Zeca">Zeca</option>
-                                        <option value="Jorge">Jorge</option>
-                                    </select>
-                                </div>
-                            </div>
+            <!-- Charts -->
+            <section class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined">analytics</span>
+                    Gráficos
+                </h2>
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Ranking Atual</h3>
+                        <div id="ranking-chart"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Evolução dos Pontos</h3>
+                        <div id="evolution-chart"></div>
+                    </div>
+                </div>
+            </section>
 
-                            <div class="space-y-4">
-                                <label class="block text-sm font-medium text-gray-700">Time Perdedor</label>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <select name="loser1" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                        <option value="">Jogador 1</option>
-                                        <option value="Ed">Ed</option>
-                                        <option value="Ian">Ian</option>
-                                        <option value="Zeca">Zeca</option>
-                                        <option value="Jorge">Jorge</option>
-                                    </select>
-                                    <select name="loser2" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                        <option value="">Jogador 2</option>
-                                        <option value="Ed">Ed</option>
-                                        <option value="Ian">Ian</option>
-                                        <option value="Zeca">Zeca</option>
-                                        <option value="Jorge">Jorge</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Add New Game -->
+            <section class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Adicionar Novo Jogo
+                </h2>
+                <form class="space-y-6">
+                    <!-- Date Input -->
+                    <div class="space-y-4">
+                        <label class="block text-sm font-medium text-gray-700">Data do Jogo</label>
+                        <input type="text" id="gameDate" placeholder="DD/MM/YY" class="w-full rounded-lg border-gray-200 focus:border-blue-500" maxlength="8">
+                    </div>
 
-                        <!-- FFA Form -->
-                        <div id="formFFA" class="hidden space-y-6">
-                            <div class="space-y-4">
-                                <label class="block text-sm font-medium text-gray-700">Classificação</label>
-                                <div class="grid grid-cols-1 gap-4">
-                                    <select name="first" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                        <option value="">1º Lugar</option>
-                                        <option value="Ed">Ed</option>
-                                        <option value="Ian">Ian</option>
-                                        <option value="Zeca">Zeca</option>
-                                        <option value="Jorge">Jorge</option>
-                                    </select>
-                                    <select name="second" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                        <option value="">2º Lugar</option>
-                                        <option value="Ed">Ed</option>
-                                        <option value="Ian">Ian</option>
-                                        <option value="Zeca">Zeca</option>
-                                        <option value="Jorge">Jorge</option>
-                                    </select>
-                                    <select name="third" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                        <option value="">3º Lugar</option>
-                                        <option value="Ed">Ed</option>
-                                        <option value="Ian">Ian</option>
-                                        <option value="Zeca">Zeca</option>
-                                        <option value="Jorge">Jorge</option>
-                                    </select>
-                                    <select name="fourth" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                        <option value="">4º Lugar</option>
-                                        <option value="Ed">Ed</option>
-                                        <option value="Ian">Ian</option>
-                                        <option value="Zeca">Zeca</option>
-                                        <option value="Jorge">Jorge</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined">save</span>
-                            Salvar Jogo
+                    <!-- Game Mode Selection -->
+                    <div class="flex gap-4">
+                        <button type="button" id="btn2v2" class="flex-1 p-3 border-2 rounded-lg hover:bg-blue-50 focus:outline-none">
+                            2v2
                         </button>
-                    </form>
-                </section>
-            </div>
+                        <button type="button" id="btnFFA" class="flex-1 p-3 border-2 rounded-lg hover:bg-blue-50 focus:outline-none">
+                            FFA
+                        </button>
+                    </div>
+
+                    <!-- 2v2 Form -->
+                    <div id="form2v2" class="hidden space-y-6">
+                        <div class="space-y-4">
+                            <label class="block text-sm font-medium text-gray-700">Time Vencedor</label>
+                            <div class="grid grid-cols-1 gap-4">
+                                <select name="winner1" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                    <option value="">Selecione o jogador</option>
+                                </select>
+                                <select name="winner2" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                    <option value="">Selecione o jogador</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <label class="block text-sm font-medium text-gray-700">Time Perdedor</label>
+                            <div class="grid grid-cols-1 gap-4">
+                                <select name="loser1" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                    <option value="">Selecione o jogador</option>
+                                </select>
+                                <select name="loser2" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                    <option value="">Selecione o jogador</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FFA Form -->
+                    <div id="formFFA" class="hidden space-y-6">
+                        <div class="space-y-4">
+                            <label class="block text-sm font-medium text-gray-700">Classificação</label>
+                            <div class="grid grid-cols-1 gap-4">
+                                <select name="first" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                    <option value="">1º Lugar</option>
+                                </select>
+                                <select name="second" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                    <option value="">2º Lugar</option>
+                                </select>
+                                <select name="third" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                    <option value="">3º Lugar</option>
+                                </select>
+                                <select name="fourth" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                    <option value="">4º Lugar</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Adicionar Jogo
+                    </button>
+                </form>
+            </section>
+
+            <!-- Game History -->
+            <section class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined">history</span>
+                    Histórico de Jogos
+                </h2>
+                <div id="game-history" class="space-y-4"></div>
+            </section>
         </div>
     </main>
 

@@ -53,6 +53,8 @@ const GameData = {
     updateUI() {
         this.updateCharts();
         this.updateGameHistoryList();
+        this.updateCurrentRankings();
+        this.updatePlayerPoints();
     },
 
     // Update both charts
@@ -172,91 +174,164 @@ const GameData = {
 
     // Update game history list
     updateGameHistoryList() {
-        const historyContainer = document.getElementById('game-history-list');
+        const historyContainer = document.getElementById('game-history');
         if (!historyContainer) return;
 
         historyContainer.innerHTML = '';
-
-        this.gameHistory.slice().reverse().forEach((game, index) => {
-            const realIndex = this.gameHistory.length - 1 - index;
-            const card = document.createElement('div');
-            card.className = 'bg-gray-50 rounded-lg p-4 game-card';
-
+        this.gameHistory.forEach((game, index) => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-lg';
+            
+            let gameDetails = '';
             if (game.mode === '2v2') {
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm text-gray-500">2v2</span>
-                        <div class="flex gap-2">
-                            <button onclick="GameData.editGame(${realIndex})" class="text-blue-600 hover:text-blue-700">
-                                <span class="material-symbols-outlined">edit</span>
-                            </button>
-                            <button onclick="GameData.deleteGame(${realIndex})" class="text-red-600 hover:text-red-700">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between">
+                gameDetails = `
+                    <div class="flex-grow">
                         <div class="flex items-center gap-2">
-                            <span class="text-green-600 material-symbols-outlined">emoji_events</span>
-                            <span>${game.winners.join(' + ')}</span>
+                            <span class="text-sm text-gray-500">${game.date || 'Data não informada'}</span>
                         </div>
-                        <span class="text-green-600 font-medium">+3</span>
-                    </div>
-                    <div class="flex items-center justify-between mt-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-red-600 material-symbols-outlined">close</span>
-                            <span>${game.losers.join(' + ')}</span>
-                        </div>
-                        <span class="text-red-600 font-medium">-1</span>
+                        <p class="text-gray-600">
+                            <span class="font-medium text-green-600">${game.winners.join(' + ')}</span>
+                            venceram
+                            <span class="font-medium text-red-600">${game.losers.join(' + ')}</span>
+                        </p>
                     </div>
                 `;
             } else {
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm text-gray-500">FFA</span>
-                        <div class="flex gap-2">
-                            <button onclick="GameData.editGame(${realIndex})" class="text-blue-600 hover:text-blue-700">
-                                <span class="material-symbols-outlined">edit</span>
-                            </button>
-                            <button onclick="GameData.deleteGame(${realIndex})" class="text-red-600 hover:text-red-700">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
+                gameDetails = `
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-500">${game.date || 'Data não informada'}</span>
                         </div>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-yellow-500 material-symbols-outlined">looks_one</span>
-                                <span>${game.first}</span>
-                            </div>
-                            <span class="text-green-600 font-medium">+3</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-gray-400 material-symbols-outlined">looks_two</span>
-                                <span>${game.second}</span>
-                            </div>
-                            <span class="text-green-600 font-medium">+2</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-amber-800 material-symbols-outlined">looks_3</span>
-                                <span>${game.third}</span>
-                            </div>
-                            <span class="text-green-600 font-medium">+1</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-purple-600 material-symbols-outlined">looks_4</span>
-                                <span>${game.fourth}</span>
-                            </div>
-                            <span class="text-gray-400 font-medium">0</span>
-                        </div>
+                        <p class="text-gray-600">
+                            <span class="font-medium text-yellow-600">1º</span> ${game.first} •
+                            <span class="font-medium text-gray-600">2º</span> ${game.second} •
+                            <span class="font-medium text-amber-600">3º</span> ${game.third} •
+                            <span class="font-medium text-red-600">4º</span> ${game.fourth}
+                        </p>
                     </div>
                 `;
             }
-            historyContainer.appendChild(card);
+
+            historyItem.innerHTML = `
+                ${gameDetails}
+                <div class="flex items-center gap-2">
+                    <button onclick="GameData.editGame(${index})" class="p-2 text-gray-500 hover:text-blue-500">
+                        <span class="material-symbols-outlined text-xl">edit</span>
+                    </button>
+                    <button onclick="GameData.deleteGame(${index})" class="p-2 text-gray-500 hover:text-red-500">
+                        <span class="material-symbols-outlined text-xl">delete</span>
+                    </button>
+                </div>
+            `;
+
+            historyContainer.appendChild(historyItem);
         });
+    },
+
+    // Update current rankings with player cards
+    updateCurrentRankings() {
+        const rankingsContainer = document.getElementById('current-rankings');
+        if (!rankingsContainer) return;
+
+        // Sort players by score
+        const sortedPlayers = this.players.slice().sort((a, b) => this.scores[b] - this.scores[a]);
+        
+        // Clear current rankings
+        rankingsContainer.innerHTML = '';
+
+        // Create player cards
+        sortedPlayers.forEach((player, index) => {
+            const card = document.createElement('div');
+            
+            // Define color classes based on player
+            const colorClasses = {
+                Ed: 'from-blue-50 to-blue-100 border-blue-200 text-blue-700 text-blue-600',
+                Ian: 'from-red-50 to-red-100 border-red-200 text-red-700 text-red-600',
+                Zeca: 'from-green-50 to-green-100 border-green-200 text-green-700 text-green-600',
+                Jorge: 'from-purple-50 to-purple-100 border-purple-200 text-purple-700 text-purple-600'
+            };
+
+            const colors = colorClasses[player];
+            const [bgFrom, bgTo, border, nameColor, pointsColor] = colors.split(' ');
+
+            // Get medal based on position
+            let medal = '';
+            if (index === 0 && this.scores[player] > 0) {
+                medal = '<span class="material-symbols-outlined text-3xl text-yellow-500">military_tech</span>';
+            } else if (index === 1 && this.scores[player] > 0) {
+                medal = '<span class="material-symbols-outlined text-3xl text-gray-400">military_tech</span>';
+            } else if (index === 2 && this.scores[player] > 0) {
+                medal = '<span class="material-symbols-outlined text-3xl text-amber-700">military_tech</span>';
+            } else {
+                medal = '<div class="w-8"></div>';
+            }
+
+            // Create HTML for the card
+            card.innerHTML = `
+                <div class="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r ${colors} border ${border}">
+                    ${medal}
+                    <div class="flex-grow">
+                        <h3 class="text-lg font-semibold ${nameColor}">${player}</h3>
+                        <p class="${pointsColor}">${this.scores[player]} pontos</p>
+                    </div>
+                </div>
+            `;
+
+            rankingsContainer.appendChild(card);
+        });
+    },
+
+    // Update individual player point displays
+    updatePlayerPoints() {
+        this.players.forEach(player => {
+            const pointsElement = document.getElementById(`${player.toLowerCase()}-points`);
+            if (pointsElement) {
+                pointsElement.textContent = `${this.scores[player]} pontos`;
+            }
+        });
+    },
+
+    // Add new game
+    addGame(mode, data) {
+        // Get the date input
+        const dateInput = document.getElementById('gameDate');
+        const date = dateInput ? dateInput.value : '';
+
+        // Validate date format (DD/MM/YY)
+        if (date && !/^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{2}$/.test(date)) {
+            alert('Por favor, insira a data no formato DD/MM/YY');
+            return;
+        }
+
+        const game = { mode, date, ...data };
+        
+        if (mode === '2v2') {
+            const { team1, team2 } = data;
+            game.winners = team1;
+            game.losers = team2;
+            this.update2v2Scores(team1, team2);
+        } else {
+            const { first, second, third, fourth } = data;
+            game.first = first;
+            game.second = second;
+            game.third = third;
+            game.fourth = fourth;
+            this.updateFfaScores(first, second, third);
+        }
+
+        this.gameHistory.unshift(game); // Add new game at the beginning
+        this.save();
+    },
+
+    // Clear form after adding game
+    clearForm() {
+        const form = document.querySelector('form');
+        if (form) {
+            form.reset();
+            document.getElementById('gameDate').value = '';
+            document.getElementById('form2v2').classList.add('hidden');
+            document.getElementById('formFFA').classList.add('hidden');
+        }
     }
 };
 
@@ -311,13 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            GameData.update2v2Scores(winners, losers);
-            GameData.gameHistory.push({
-                mode: '2v2',
-                winners,
-                losers,
-                timestamp: new Date().toISOString()
-            });
+            GameData.addGame('2v2', { team1: winners, team2: losers });
         } else {
             // FFA mode
             const first = form.querySelector('[name="first"]').value;
@@ -337,27 +406,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            GameData.updateFfaScores(first, second, third);
-            GameData.gameHistory.push({
-                mode: 'ffa',
-                first,
-                second,
-                third,
-                fourth,
-                timestamp: new Date().toISOString()
-            });
+            GameData.addGame('ffa', { first, second, third, fourth });
         }
 
-        GameData.save();
-        form.reset();
+        GameData.clearForm();
     });
 });
 
 // Game editing functions
 GameData.editGame = function(index) {
     const game = this.gameHistory[index];
-    // TODO: Implement edit functionality
-    console.log('Editing game:', game);
+    if (!game) return;
+
+    // Reset form
+    this.clearForm();
+
+    // Set date
+    const dateInput = document.getElementById('gameDate');
+    if (dateInput) {
+        dateInput.value = game.date || '';
+    }
+
+    // Set game mode and show corresponding form
+    const mode = game.mode.toLowerCase();
+    if (mode === '2v2') {
+        document.getElementById('form2v2').classList.remove('hidden');
+        document.getElementById('formFFA').classList.add('hidden');
+        
+        // Set winners
+        document.querySelector('[name="winner1"]').value = game.winners[0] || '';
+        document.querySelector('[name="winner2"]').value = game.winners[1] || '';
+        
+        // Set losers
+        document.querySelector('[name="loser1"]').value = game.losers[0] || '';
+        document.querySelector('[name="loser2"]').value = game.losers[1] || '';
+
+        // Update button styles
+        document.getElementById('btn2v2').classList.add('border-blue-500', 'bg-blue-50');
+        document.getElementById('btnFFA').classList.remove('border-blue-500', 'bg-blue-50');
+    } else {
+        document.getElementById('formFFA').classList.remove('hidden');
+        document.getElementById('form2v2').classList.add('hidden');
+        
+        // Set positions
+        document.querySelector('[name="first"]').value = game.first || '';
+        document.querySelector('[name="second"]').value = game.second || '';
+        document.querySelector('[name="third"]').value = game.third || '';
+        document.querySelector('[name="fourth"]').value = game.fourth || '';
+
+        // Update button styles
+        document.getElementById('btnFFA').classList.add('border-blue-500', 'bg-blue-50');
+        document.getElementById('btn2v2').classList.remove('border-blue-500', 'bg-blue-50');
+    }
+
+    // Remove the old game
+    this.gameHistory.splice(index, 1);
+    
+    // Recalculate scores
+    this.recalculateScores();
+    this.save();
+
+    // Scroll to form
+    document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
 };
 
 GameData.deleteGame = function(index) {
