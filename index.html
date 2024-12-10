@@ -5,28 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Age of Empires IV - Ranking</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <style>
-        body {
-            background-color: #f3f4f6;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        }
-        .game-card {
-            transition: transform 0.2s;
-        }
-        .game-card:hover {
-            transform: translateY(-2px);
-        }
-        .chart-container {
-            transition: all 0.3s ease;
-        }
-        .chart-container:hover {
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+    <script type="module" src="js/firebaseConfig.js"></script>
+    <script type="module" src="js/firebaseServices.js"></script>
+    <script type="module" src="js/main.js"></script>
   </head>
-  <body class="min-h-screen">
+  <body class="min-h-screen bg-gray-100 font-roboto">
     <!-- Header -->
     <header class="bg-white shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -102,7 +88,7 @@
                     <div class="space-y-4">
                         <label class="block text-sm font-medium text-gray-700">Data do Jogo</label>
                         <input type="text" 
-                               id="gameDate" 
+                               id="game-date" 
                                placeholder="DD/MM/YY" 
                                pattern="\d{2}/\d{2}/\d{2}"
                                class="w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
@@ -112,12 +98,14 @@
 
                     <!-- Game Mode Selection -->
                     <div class="flex gap-4">
-                        <button type="button" id="btn2v2" class="flex-1 p-3 border-2 rounded-lg hover:bg-blue-50 focus:outline-none">
+                        <label class="flex-1 p-3 border-2 rounded-lg hover:bg-blue-50 focus:outline-none">
+                            <input type="radio" name="game-mode" value="2v2" class="hidden" required>
                             2v2
-                        </button>
-                        <button type="button" id="btnFFA" class="flex-1 p-3 border-2 rounded-lg hover:bg-blue-50 focus:outline-none">
+                        </label>
+                        <label class="flex-1 p-3 border-2 rounded-lg hover:bg-blue-50 focus:outline-none">
+                            <input type="radio" name="game-mode" value="ffa" class="hidden" required>
                             FFA
-                        </button>
+                        </label>
                     </div>
 
                     <!-- 2v2 Form -->
@@ -125,23 +113,27 @@
                         <div class="space-y-4">
                             <label class="block text-sm font-medium text-gray-700">Time Vencedor</label>
                             <div class="grid grid-cols-1 gap-4">
-                                <select name="winner1" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                    <option value="">Selecione o jogador</option>
-                                </select>
-                                <select name="winner2" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                    <option value="">Selecione o jogador</option>
-                                </select>
+                                <label class="flex items-center">
+                                    <input type="radio" name="winner-players" value="player1" class="mr-2">
+                                    Jogador 1
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="winner-players" value="player2" class="mr-2">
+                                    Jogador 2
+                                </label>
                             </div>
                         </div>
                         <div class="space-y-4">
                             <label class="block text-sm font-medium text-gray-700">Time Perdedor</label>
                             <div class="grid grid-cols-1 gap-4">
-                                <select name="loser1" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                    <option value="">Selecione o jogador</option>
-                                </select>
-                                <select name="loser2" class="rounded-lg border-gray-200 focus:border-blue-500">
-                                    <option value="">Selecione o jogador</option>
-                                </select>
+                                <label class="flex items-center">
+                                    <input type="radio" name="loser-players" value="player3" class="mr-2">
+                                    Jogador 3
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="loser-players" value="player4" class="mr-2">
+                                    Jogador 4
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -151,17 +143,33 @@
                         <div class="space-y-4">
                             <label class="block text-sm font-medium text-gray-700">Classificação</label>
                             <div class="grid grid-cols-1 gap-4">
-                                <select name="first" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                <select id="first-place" class="rounded-lg border-gray-200 focus:border-blue-500">
                                     <option value="">1º Lugar</option>
+                                    <option value="player1">Jogador 1</option>
+                                    <option value="player2">Jogador 2</option>
+                                    <option value="player3">Jogador 3</option>
+                                    <option value="player4">Jogador 4</option>
                                 </select>
-                                <select name="second" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                <select id="second-place" class="rounded-lg border-gray-200 focus:border-blue-500">
                                     <option value="">2º Lugar</option>
+                                    <option value="player1">Jogador 1</option>
+                                    <option value="player2">Jogador 2</option>
+                                    <option value="player3">Jogador 3</option>
+                                    <option value="player4">Jogador 4</option>
                                 </select>
-                                <select name="third" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                <select id="third-place" class="rounded-lg border-gray-200 focus:border-blue-500">
                                     <option value="">3º Lugar</option>
+                                    <option value="player1">Jogador 1</option>
+                                    <option value="player2">Jogador 2</option>
+                                    <option value="player3">Jogador 3</option>
+                                    <option value="player4">Jogador 4</option>
                                 </select>
-                                <select name="fourth" class="rounded-lg border-gray-200 focus:border-blue-500">
+                                <select id="fourth-place" class="rounded-lg border-gray-200 focus:border-blue-500">
                                     <option value="">4º Lugar</option>
+                                    <option value="player1">Jogador 1</option>
+                                    <option value="player2">Jogador 2</option>
+                                    <option value="player3">Jogador 3</option>
+                                    <option value="player4">Jogador 4</option>
                                 </select>
                             </div>
                         </div>
@@ -183,7 +191,5 @@
             </section>
         </div>
     </main>
-
-    <script src="js/game.js"></script>
   </body>
 </html>
